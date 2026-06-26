@@ -6,24 +6,33 @@ import { revalidatePath } from 'next/cache';
 import { authSchema } from '@/lib/validations/schemas';
 
 export async function login(formData: FormData) {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  const validated = authSchema.pick({ email: true, password: true }).parse({
-    email: formData.get('email'),
-    password: formData.get('password'),
-  });
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email: validated.email,
-    password: validated.password,
-  });
+    if (!email || !password) {
+      return redirect('/login?error=' + encodeURIComponent('Preencha todos os campos.'));
+    }
 
-  if (error) {
-    return redirect('/login?error=' + encodeURIComponent(error.message));
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error('Login error:', error.message);
+      return redirect('/login?error=' + encodeURIComponent('Credenciais inválidas ou e-mail não confirmado.'));
+    }
+
+    revalidatePath('/', 'layout');
+    return redirect('/dashboard');
+  } catch (err: any) {
+    if (err.message === 'NEXT_REDIRECT') throw err;
+    console.error('Login catch error:', err);
+    return redirect('/login?error=' + encodeURIComponent('Erro ao tentar entrar. Verifique sua conexão.'));
   }
-
-  revalidatePath('/', 'layout');
-  redirect('/dashboard');
 }
 
 export async function signup(formData: FormData) {
@@ -52,7 +61,10 @@ export async function signup(formData: FormData) {
 
     if (error) {
       console.error('Supabase signup error:', error.message);
-      return redirect('/login?error=' + encodeURIComponent(error.message));
+      // More user friendly message for common Supabase errors
+      let msg = error.message;
+      if (msg.includes('already registered')) msg = 'Este e-mail já está cadastrado.';
+      return redirect('/login?error=' + encodeURIComponent(msg));
     }
 
     if (!data.user) {
