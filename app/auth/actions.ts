@@ -27,30 +27,52 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  const validated = authSchema.parse({
-    email: formData.get('email'),
-    password: formData.get('password'),
-    fullName: formData.get('full_name'),
-  });
+    const rawEmail = formData.get('email');
+    const rawPassword = formData.get('password');
+    const rawFullName = formData.get('full_name');
 
-  const { error } = await supabase.auth.signUp({
-    email: validated.email,
-    password: validated.password,
-    options: {
-      data: {
-        full_name: validated.fullName,
+    const validated = authSchema.parse({
+      email: rawEmail,
+      password: rawPassword,
+      fullName: rawFullName,
+    });
+
+    const { data, error } = await supabase.auth.signUp({
+      email: validated.email,
+      password: validated.password,
+      options: {
+        data: {
+          full_name: validated.fullName,
+        },
       },
-    },
-  });
+    });
 
-  if (error) {
-    return redirect('/login?error=' + encodeURIComponent(error.message));
+    if (error) {
+      console.error('Supabase signup error:', error.message);
+      return redirect('/login?error=' + encodeURIComponent(error.message));
+    }
+
+    if (!data.user) {
+      return redirect('/login?error=' + encodeURIComponent('Falha ao criar usuário. Tente novamente.'));
+    }
+
+    revalidatePath('/', 'layout');
+    return redirect('/login?message=' + encodeURIComponent('Conta criada com sucesso! Verifique seu e-mail ou tente fazer o login.'));
+  } catch (err: any) {
+    console.error('Catch-all signup error:', err);
+    if (err.name === 'ZodError') {
+      const firstError = err.errors[0]?.message || 'Dados inválidos';
+      return redirect('/login?error=' + encodeURIComponent(firstError));
+    }
+    // Check if it's a redirect (which Next.js throws internally)
+    if (err.message === 'NEXT_REDIRECT') {
+      throw err;
+    }
+    return redirect('/login?error=' + encodeURIComponent(err.message || 'Erro inesperado ao criar conta.'));
   }
-
-  revalidatePath('/', 'layout');
-  redirect('/login?message=' + encodeURIComponent('Check your email to confirm your account.'));
 }
 
 export async function signOut() {
