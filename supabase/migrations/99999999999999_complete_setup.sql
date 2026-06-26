@@ -1,6 +1,6 @@
 -- ==========================================
--- SCRIPT DE CONFIGURAÇÃO COMPLETA (UNIFICADO)
--- OrganizaEstudo - Executar este script para resetar/configurar o banco do zero
+-- SCRIPT DE CONFIGURAÇÃO COMPLETA (UNIFICADO V2)
+-- OrganizaEstudo - Executar este script para configurar o banco corretamente
 -- ==========================================
 
 -- 1. Tabelas Base (Perfis, Turmas, Membros)
@@ -103,12 +103,13 @@ CREATE POLICY "Admins can manage items" ON public.items FOR ALL USING (
     EXISTS (SELECT 1 FROM public.sections JOIN public.class_members ON sections.class_id = class_members.class_id WHERE sections.id = items.section_id AND class_members.user_id = auth.uid() AND (role = 'owner' OR role = 'admin'))
 );
 
--- 5. Storage (Bucket e Políticas)
+-- 5. Storage (Bucket e Políticas via helper functions)
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('class-attachments', 'class-attachments', false)
 ON CONFLICT (id) DO NOTHING;
 
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- Nota: Não usamos ALTER TABLE storage.objects pois exige permissões de superuser que o dashboard restringe.
+-- O Supabase já habilita RLS por padrão em novos buckets.
 
 DROP POLICY IF EXISTS "Members can view attachments" ON storage.objects;
 CREATE POLICY "Members can view attachments" ON storage.objects FOR SELECT USING (
@@ -125,7 +126,7 @@ CREATE POLICY "Admins can delete attachments" ON storage.objects FOR DELETE USIN
     bucket_id = 'class-attachments' AND EXISTS (SELECT 1 FROM public.class_members WHERE class_members.class_id::text = (storage.foldername(name))[1] AND class_members.user_id = auth.uid() AND (role = 'owner' OR role = 'admin'))
 );
 
--- Restrição de MIME Types
+-- Restrição de MIME Types (via update no bucket)
 UPDATE storage.buckets SET allowed_mime_types = ARRAY['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-powerpoint','application/vnd.openxmlformats-officedocument.presentationml.presentation','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','image/jpeg','image/png','image/gif','image/webp','video/mp4','video/webm','text/plain'] WHERE id = 'class-attachments';
 
 -- 6. Gatilhos Automáticos (Triggers)
