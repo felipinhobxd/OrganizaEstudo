@@ -36,9 +36,10 @@ npm install
 Crie um arquivo `.env.local` baseado no `.env.example` e preencha com suas credenciais do Supabase.
 
 ### 4. Configurar o Banco de Dados (Supabase)
-Execute os scripts SQL localizados em `supabase/migrations/` no SQL Editor do seu projeto Supabase:
-1. `20240626000000_create_sections_and_items.sql`
-2. `20240627000000_security_hardening.sql`
+Execute os scripts SQL localizados em `supabase/migrations/` no SQL Editor do seu projeto Supabase na seguinte ordem:
+1. `20240625000000_core_schema.sql`
+2. `20240626000000_create_sections_and_items.sql`
+3. `20240627000000_security_hardening.sql`
 
 ## 📦 Deploy na Vercel
 

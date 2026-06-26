@@ -9,7 +9,8 @@ Antes de fazer o deploy do código, o banco de dados deve estar pronto.
 1. Acesse o [Supabase Dashboard](https://supabase.com).
 2. Vá em **SQL Editor**.
 3. Execute o conteúdo dos arquivos de migração (na ordem):
-   - `supabase/migrations/20240626000000_create_sections_and_items.sql` (Criação de tabelas e bucket).
+   - `supabase/migrations/20240625000000_core_schema.sql` (Base do sistema: Perfis, Turmas e Membros).
+   - `supabase/migrations/20240626000000_create_sections_and_items.sql` (Funcionalidades: Seções, Itens e Bucket).
    - `supabase/migrations/20240627000000_security_hardening.sql` (Reforço de segurança e MIME types).
 4. Em **Authentication > URL Configuration**, adicione a URL da sua Vercel aos "Redirect URLs".
 
