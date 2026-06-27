@@ -15,20 +15,8 @@ export default function Navbar({ user, title = "Dashboard" }: NavbarProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Usando requestAnimationFrame ou setTimeout para evitar o erro de set-state-in-effect
-    const timer = setTimeout(() => {
-      setMounted(true);
-    }, 0);
-    return () => clearTimeout(timer);
+    setMounted(true);
   }, []);
-
-  if (!mounted) return (
-    <header className="bg-background/80 backdrop-blur-md border-b border-border h-16 sticky top-0 px-8 flex justify-between items-center z-30">
-      <div className="flex items-center space-x-4">
-        <h2 className="text-lg font-bold tracking-tight text-foreground">{title}</h2>
-      </div>
-    </header>
-  );
 
   return (
     <header className="bg-background/80 backdrop-blur-md border-b border-border h-16 sticky top-0 px-8 flex justify-between items-center z-30">
@@ -37,12 +25,14 @@ export default function Navbar({ user, title = "Dashboard" }: NavbarProps) {
       </div>
 
       <div className="flex items-center space-x-4">
-        <button
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-500 hover:text-foreground transition"
-        >
-          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
+        {mounted && (
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-500 hover:text-foreground transition"
+          >
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+        )}
 
         <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-500 hover:text-foreground transition relative">
           <Bell size={20} />
