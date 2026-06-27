@@ -72,11 +72,9 @@ export default async function LoginPage(props: {
                 </div>
               </div>
 
-              <button formAction={login} className="w-full">
-                <Button className="w-full py-6 text-base" variant="primary" type="submit">
-                  Acessar Conta
-                </Button>
-              </button>
+              <Button formAction={login} className="w-full py-6 text-base" variant="primary" type="submit">
+                Acessar Conta
+              </Button>
             </form>
 
             <div className="relative">
@@ -123,11 +121,9 @@ export default async function LoginPage(props: {
                 </div>
               </div>
 
-              <button formAction={signup} className="w-full">
-                <Button className="w-full py-6 text-base" variant="outline" type="submit">
-                  Cadastrar agora
-                </Button>
-              </button>
+              <Button formAction={signup} className="w-full py-6 text-base" variant="outline" type="submit">
+                Cadastrar agora
+              </Button>
             </form>
           </div>
         </Card>
