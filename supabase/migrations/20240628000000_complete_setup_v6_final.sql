@@ -14,6 +14,17 @@ DROP POLICY IF EXISTS "Section View" ON public.sections;
 DROP POLICY IF EXISTS "Section Manage" ON public.sections;
 DROP POLICY IF EXISTS "Item View" ON public.items;
 DROP POLICY IF EXISTS "Item Manage" ON public.items;
+DROP POLICY IF EXISTS "User View Notifications" ON public.notifications;
+DROP POLICY IF EXISTS "User Update Notifications" ON public.notifications;
+DROP POLICY IF EXISTS "User Delete Notifications" ON public.notifications;
+DROP POLICY IF EXISTS "File View" ON storage.objects;
+DROP POLICY IF EXISTS "File Upload" ON storage.objects;
+DROP POLICY IF EXISTS "Avatar View" ON storage.objects;
+DROP POLICY IF EXISTS "Avatar Upload" ON storage.objects;
+DROP POLICY IF EXISTS "Avatar Update" ON storage.objects;
+DROP POLICY IF EXISTS "Avatar Delete" ON storage.objects;
+DROP POLICY IF EXISTS "Attachments View" ON storage.objects;
+DROP POLICY IF EXISTS "Attachments Upload" ON storage.objects;
 
 -- 2. FUNÇÕES DE BYPASS (SECURITY DEFINER)
 -- Estas funções rodam fora do RLS, quebrando qualquer ciclo de recursão.
