@@ -90,6 +90,9 @@ CREATE POLICY "Public Profiles" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "Own Profile" ON public.profiles FOR ALL USING (auth.uid() = id);
 
 -- [NOTIFICATIONS]
+DROP POLICY IF EXISTS "User View Notifications" ON public.notifications;
+DROP POLICY IF EXISTS "User Update Notifications" ON public.notifications;
+DROP POLICY IF EXISTS "User Delete Notifications" ON public.notifications;
 CREATE POLICY "User View Notifications" ON public.notifications FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "User Update Notifications" ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "User Delete Notifications" ON public.notifications FOR DELETE USING (auth.uid() = user_id);
