@@ -9,6 +9,7 @@ import { LogOut, Trash2, Users, Info } from 'lucide-react';
 import { Metadata } from 'next';
 import { ClassMember, Section, Class, Item } from '@/types/database';
 import { cn } from '@/utils/ui/cn';
+import { getNotifications } from '../../actions';
 
 export async function generateMetadata(props: {
   params: Promise<{ id: string }>;
@@ -36,37 +37,23 @@ export default async function ClassDashboardPage(props: {
 
   if (!user) redirect('/login');
 
-  const { data: classData, error: classError } = await supabase
-    .from('classes')
-    .select(`
-      *,
-      class_members (
-        role,
-        profiles (
-          id,
-          full_name,
-          avatar_url
-        )
-      ),
-      sections (
-        *,
-        items (
-          *
-        )
-      )
-    `)
-    .eq('id', params.id)
-    .single();
+  // Parallel data fetching for performance optimization
+  const [profileRes, classRes, userClassesRes, notificationsRes] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase.from('classes').select(`*, class_members (role, profiles (id, full_name, avatar_url)), sections (*, items (*))`).eq('id', params.id).single(),
+    supabase.from('class_members').select(`classes (*)`).eq('user_id', user.id),
+    getNotifications()
+  ]);
 
-  if (classError || !classData) {
+  const profile = profileRes.data;
+  const classData = classRes.data;
+  const userClasses = userClassesRes.data as any[];
+  const notifications = notificationsRes;
+
+  if (classRes.error || !classData) {
     return notFound();
   }
 
-  // Fetch all classes for the sidebar
-  const { data: userClasses } = await supabase
-    .from('class_members')
-    .select(`classes (id, name, description, invite_code, owner_id, created_at)`)
-    .eq('user_id', user.id);
   const classes = userClasses?.map((c) => c.classes as unknown as Class) || [];
 
   const sortedSections: Section[] = (classData.sections || [])
@@ -81,7 +68,13 @@ export default async function ClassDashboardPage(props: {
   const isOwner = userMembership?.role === 'owner';
 
   return (
-    <AppLayout user={user} classes={classes} title={classData.name}>
+    <AppLayout
+      user={user}
+      profile={profile}
+      classes={classes}
+      notifications={notifications}
+      title={classData.name}
+    >
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2 space-y-8">
           <Card className="relative overflow-hidden group">

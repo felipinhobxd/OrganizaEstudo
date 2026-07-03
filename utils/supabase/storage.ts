@@ -56,3 +56,26 @@ export async function deleteFile(path: string): Promise<void> {
 
   if (error) throw error;
 }
+
+/**
+ * Uploads an avatar image to the 'avatars' bucket.
+ * Stores files as {userId}/{uuid}-{name}
+ */
+export async function uploadAvatar(userId: string, file: File): Promise<string> {
+  const supabase = createClient();
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+  const filePath = `${userId}/${fileName}`;
+
+  const { error } = await supabase.storage
+    .from('avatars')
+    .upload(filePath, file);
+
+  if (error) throw error;
+
+  const { data } = supabase.storage
+    .from('avatars')
+    .getPublicUrl(filePath);
+
+  return data.publicUrl;
+}

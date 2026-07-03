@@ -5,35 +5,40 @@ import { Card } from '@/components/shared/Card';
 import { Button } from '@/components/shared/Button';
 import { Plus, Users, ArrowRight } from 'lucide-react';
 import { ClassMember, Class } from '@/types/database';
+import { getNotifications } from './actions';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: userClasses } = await supabase
-    .from('class_members')
-    .select(`
-      role,
-      classes (
-        id,
-        name,
-        description,
-        invite_code,
-        owner_id,
-        created_at
-      )
-    `)
-    .eq('user_id', user?.id) as { data: (Pick<ClassMember, 'role'> & { classes: Class })[] | null };
+  if (!user) return null;
+
+  // Fetch data in parallel to optimize performance
+  const [profileRes, userClassesRes, notificationsRes] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase.from('class_members').select(`role, classes (*)`).eq('user_id', user.id),
+    getNotifications()
+  ]);
+
+  const profile = profileRes.data;
+  const userClasses = userClassesRes.data as any[];
+  const notifications = notificationsRes;
 
   const classes = userClasses?.map((c) => c.classes) || [];
 
   return (
-    <AppLayout user={user} classes={classes} title="Dashboard">
+    <AppLayout
+      user={user}
+      profile={profile}
+      classes={classes}
+      notifications={notifications}
+      title="Dashboard"
+    >
       <div className="space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              Olá, {user?.email?.split('@')[0]}! 👋
+              Olá, {profile?.full_name || user?.email?.split('@')[0]}! 👋
             </h1>
             <p className="text-gray-500 mt-1">Bem-vindo de volta ao seu centro de estudos.</p>
           </div>

@@ -37,3 +37,8 @@ export const authSchema = z.object({
   password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres"),
   fullName: z.string().min(2, "Nome muito curto").optional(),
 });
+
+export const profileSchema = z.object({
+  full_name: z.string().min(2, "Nome muito curto").max(100, "Nome muito longo"),
+  avatar_url: z.string().url().or(z.literal('')).optional().nullable(),
+});

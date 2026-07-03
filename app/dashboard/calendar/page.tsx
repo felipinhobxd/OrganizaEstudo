@@ -1,20 +1,35 @@
 import AppLayout from '@/components/layout/AppLayout';
 import { createClient } from '@/utils/supabase/server';
-import { Card } from '@/components/shared/Card';
 import { Calendar as CalendarIcon } from 'lucide-react';
+import { getNotifications } from '../actions';
 
 export default async function CalendarPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: userClasses } = await supabase
-    .from('class_members')
-    .select(`classes (id, name)`)
-    .eq('user_id', user?.id);
+  if (!user) return null;
+
+  // Parallel fetching
+  const [profileRes, userClassesRes, notificationsRes] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase.from('class_members').select(`classes (*)`).eq('user_id', user.id),
+    getNotifications()
+  ]);
+
+  const profile = profileRes.data;
+  const userClasses = userClassesRes.data as any[];
+  const notifications = notificationsRes;
+
   const classes = userClasses?.map((c: any) => c.classes) || [];
 
   return (
-    <AppLayout user={user} classes={classes} title="Agenda">
+    <AppLayout
+      user={user}
+      profile={profile}
+      classes={classes}
+      notifications={notifications}
+      title="Agenda"
+    >
       <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
         <div className="h-20 w-20 bg-primary/10 rounded-full flex items-center justify-center text-primary">
           <CalendarIcon size={32} />

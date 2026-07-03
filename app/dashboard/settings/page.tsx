@@ -1,27 +1,46 @@
 import AppLayout from '@/components/layout/AppLayout';
 import { createClient } from '@/utils/supabase/server';
-import { Settings as SettingsIcon } from 'lucide-react';
+import { ProfileForm } from '@/components/settings/ProfileForm';
+import { Profile, Class } from '@/types/database';
+import { getNotifications } from '../actions';
 
 export default async function SettingsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: userClasses } = await supabase
-    .from('class_members')
-    .select(`classes (id, name)`)
-    .eq('user_id', user?.id);
-  const classes = userClasses?.map((c: any) => c.classes) || [];
+  if (!user) return null;
+
+  // Parallel fetching
+  const [profileRes, userClassesRes, notificationsRes] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase.from('class_members').select(`classes (*)`).eq('user_id', user.id),
+    getNotifications()
+  ]);
+
+  const profile = profileRes.data;
+  const userClasses = userClassesRes.data as any[];
+  const notifications = notificationsRes;
+
+  const classes = userClasses?.map((c: any) => c.classes as Class) || [];
 
   return (
-    <AppLayout user={user} classes={classes} title="Configurações">
-      <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-        <div className="h-20 w-20 bg-primary/10 rounded-full flex items-center justify-center text-primary">
-          <SettingsIcon size={32} />
+    <AppLayout
+      user={user}
+      profile={profile}
+      classes={classes}
+      notifications={notifications}
+      title="Configurações"
+    >
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-black text-foreground tracking-tight">Suas Configurações</h1>
+          <p className="text-gray-500">Gerencie suas informações pessoais e preferências.</p>
         </div>
-        <h1 className="text-2xl font-bold text-foreground">Configurações da Conta</h1>
-        <p className="text-gray-500 max-w-md">
-          Gerencie seu perfil, preferências de notificação e segurança da conta nesta área (em breve).
-        </p>
+
+        <ProfileForm
+          profile={profile as Profile}
+          userId={user.id}
+        />
       </div>
     </AppLayout>
   );
