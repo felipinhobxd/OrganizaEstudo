@@ -12,6 +12,19 @@ const PORT = 3000;
 let mainWindow = null;
 let stackProcess = null;
 
+// --- Uma instância SÓ: segunda tentativa de abrir foca a janela existente ---
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+}
+
 // --- Detecta a raiz do projeto (dev vs instalado) ----------------------------
 const ROOT = app.isPackaged ? path.join(process.resourcesPath, "app") : path.join(__dirname, "..");
 
@@ -48,9 +61,18 @@ function startStack() {
     return;
   }
   console.log("[stack] iniciando via start-all.mjs...");
-  stackProcess = spawn(process.execPath, [script], {
+  // CRÍTICO: no Electron empacotado, process.execPath aponta para o PRÓPRIO
+  // .exe. Spawnar com ele abre OUTRA instância do app (loop infinito de
+  // janelas). A flag ELECTRON_RUN_AS_NODE=1 faz o binário do Electron agir
+  // como Node.js puro — exatamente o que os scripts precisam.
+  const isElectron = Boolean(process.versions.electron);
+  const nodeBin = isElectron ? process.execPath : "node";
+  const childEnv = { ...process.env, NODE_ENV: "production" };
+  if (isElectron) childEnv.ELECTRON_RUN_AS_NODE = "1";
+
+  stackProcess = spawn(nodeBin, [script], {
     cwd: ROOT,
-    env: { ...process.env, NODE_ENV: "production" },
+    env: childEnv,
     stdio: ["ignore", "pipe", "pipe"],
     windowsHide: true,
   });
