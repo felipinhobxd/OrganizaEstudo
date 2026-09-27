@@ -2,7 +2,7 @@
 
 > Área: Arquitetura
 > Escopo: Componentes, pontos de entrada, comunicação, diagramas
-> Última atualização: 2026-09-23
+$12026-09-25
 > Fonte principal: `scripts/start-all.mjs`, `bot/service.mjs`, `bot/index.mjs`, `recognition/recognition_server.py`, `app/api/**`, `lib/supabase-server.ts`
 
 ## Diagrama real (confirmado no código)

@@ -2,7 +2,7 @@
 
 > Área: Banco de dados
 > Escopo: Tabelas, RPCs, triggers, RLS, estados, idempotência, perigos
-> Última atualização: 2026-09-24
+> Última atualização: 2026-09-25
 > Fonte principal: `supabase/schema.sql`, `supabase/operations.sql`, `supabase/whatsapp_bridge.sql`, `supabase/migrations/*.sql` (todas), `lib/backend.ts`, `app/api/**`, `bot/**`
 
 ## Como o schema chega ao banco
@@ -27,6 +27,7 @@ Ordem de aplicação (confirmada no CI `ci.yml`): `tests/bootstrap.sql` → `sup
 | `whatsapp_quick_polls` | brindes: enquete livre agendada (20260924120000) + **itens de brinde da fila** (20260924160000: foto da carta + posição na fila) | `group_id FK, title, options jsonb, image_url, queue_id FK CASCADE, queue_position, scheduled_at, sent_at, poll_message_id UNIQUE, external_event_id UNIQUE, created_by` | bot publica (P-07); fila com brinde |
 | `payment_reminders` | ciclo de lembretes de pagamento (idem) | `purchase_id UNIQUE FK CASCADE, participant_id, reminded_count, last_reminded_at` | bot drena (P-09) |
 | `auction_drafts` | rascunhos do wizard em lote (20260924150000): snapshot serializável para continuar a programação depois | `id uuid PK (client-generated), title 1..120, payload jsonb (≤512KB, cards 1..200), created_by, created_at, updated_at` | API drafts, purge/backup |
+| `auction_publish_queues.total_items` | constraint: 1..**200** (era 100; 20260925140000) | `check (total_items between 1 and 200)` | wizard em lote |
 | `cards.extra_images` | coluna jsonb: até 4 URLs HTTPS de fotos de detalhe (idem) | `default '[]'` | wizard + bot envia em sequência (P-08) |
 | `auction_events` | auditoria append-only | `auction_id, participant_id, admin_user_id, event_type, external_event_id, payload` | export/auditoria |
 | `processed_commands` | cache de idempotência | `external_event_id, request, result` | TODOS os eventos |
@@ -61,7 +62,10 @@ Ordem de aplicação (confirmada no CI `ci.yml`): `tests/bootstrap.sql` → `sup
 - `upsert_auction_draft(p_payload, p_admin_user_id)` / `delete_auction_draft(p_draft_id, p_admin_user_id)` (20260924150000) — salvar/excluir rascunho do wizard. Upsert idempotente por PK (id gerado no cliente, SEM processed_commands); guards espelham a rota (título 1..120, cards 1..200, ≤512KB); propriedade: rascunho alheio vira `draft_not_found`; delete idempotente por estado.
 - `purge_all_business_data(p_confirm)` — corpo MAIS RECENTE agora é o da 20260924150000 (adicionou `auction_drafts` à cadeia de deletes e ao `deleted` do retorno).
 - `mark_purchase_paid(p_purchase_id, p_admin_user_id, p_method, p_reference)` (20260924120000) — baixa de pagamento idempotente por estado: payments → `paid`, delivery → `ready`, audita UMA vez; para os lembretes DM do bot.
-- `cleanup_old_auctions(p_days=30)` — limpeza horária de lotes terminais mais velhos que o corte; levanta/restaura `immutable_audit`; avisos globais sobrevivem (FK SET NULL + contexto denormalizado em `participant_warnings`).
+- `cleanup_old_auctions(p_days=30)` — o RPC continua com default 30 (flexível); o BOT chama com default **1 dia** (BOT_CLEANUP_DAYS=1, bot/service.mjs).
+- `delete_auction(p_auction_id, p_confirm, p_admin)` (20260925130000) — exclusão REAL com frase "sim quero" (tripla UI→API→RPC); apaga árvore FK-safe; carta órfã junto; participant_warnings sobrevive (SET NULL); SECURITY DEFINER (drop/recreate do immutable_audit); fila vazia removida (adição do operador).
+- `update_pending_queue_item(p_dispatch_id, p_payload, p_admin)` (20260924210000) — editar lote pendente: preços/duração/foto + re-gera poll_options + recompute scheduled_end_at.
+- `read_auction_snapshot()` / `read_dashboard_snapshot()` — AMBAS com LIMITs (20260925140000/150000): bids 50k, events 5k, cards 2000, auctions 500. Fix de timeout 57014 e egress (~4.8 GB/dia → ~100 MB/dia).
 
 ## Triggers
 

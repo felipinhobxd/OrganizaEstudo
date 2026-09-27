@@ -2,7 +2,7 @@
 
 > Área: Regras de negócio do leilão
 > Escopo: Lote, carta, valores, lances, enquete, ARREMATE, vencedor, fila, avisos
-> Última atualização: 2026-09-23
+$12026-09-25
 > Fonte principal: `lib/auction-wizard.ts`, `app/api/auctions/**`, `supabase/migrations/**` (RPCs), `bot/index.mjs`, `bot/format.mjs`, `app/api/export/route.ts`
 
 ## Conceitos e onde vivem

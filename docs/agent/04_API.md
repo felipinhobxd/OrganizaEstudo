@@ -2,7 +2,7 @@
 
 > Área: API HTTP do painel
 > Escopo: Rotas, contratos, autenticação, idempotência
-> Última atualização: 2026-09-24
+$12026-09-25
 > Fonte principal: `app/api/**/route.ts`, `lib/backend.ts`, `lib/purge.ts`, `lib/card-recognition-token.mjs`, `lib/card-catalog.ts`, `lib/rate-limit.ts`, `lib/auction-draft.ts`
 
 ## Padrão comum (confirmado em todas as rotas)

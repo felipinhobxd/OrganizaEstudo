@@ -2,7 +2,7 @@
 
 > Área: Projeto inteiro
 > Escopo: Visão geral, objetivo do produto, componentes, ambientes
-> Última atualização: 2026-09-23
+$12026-09-25
 > Fonte principal: README.md, package.json, bot/package.json, recognition/README.md, código das sessões de trabalho até `6b9e8a6e`
 
 ## O que o projeto faz

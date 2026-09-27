@@ -2,7 +2,7 @@
 
 > Área: Reconhecimento
 > Escopo: Pipeline, modelos, catálogo, serviço HTTP, integração, benchmarks, env
-> Última atualização: 2026-09-23
+$12026-09-25
 > Fonte principal: `recognition/recognition_server.py`, `recognition/recognizer/**`, `recognition/scripts/**`, `recognition/README.md`, `docs/card-recognition.md`, `lib/card-recognition-local.ts`, `scripts/recognition-shared.mjs`
 
 ## Arquitetura do pipeline (`recognizer/pipeline.py::recognize`)

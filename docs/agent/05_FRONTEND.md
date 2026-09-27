@@ -2,7 +2,7 @@
 
 > Área: Frontend Next.js
 > Escopo: Páginas, fluxos, estados, integrações
-> Última atualização: 2026-09-24
+$12026-09-25
 > Fonte principal: `app/layout.tsx`, `app/page.tsx`, `app/dashboard.tsx`, `app/auctions/new/**`, `app/whatsapp/**`, `lib/card-recognition-local.ts`, `lib/auction-draft.ts`
 
 ## Mapa real (arquivo → funcionalidade)

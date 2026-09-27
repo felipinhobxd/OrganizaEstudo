@@ -2,7 +2,7 @@
 
 > Área: Testes
 > Escopo: Suítes, comandos, cobertura, lacunas
-> Última atualização: 2026-09-24
+$12026-09-25
 > Fonte principal: `package.json`, `bot/package.json`, `.github/workflows/ci.yml`, `tests/**`, `bot/*.test.mjs`, `recognition/tests/**`, `benchmarks/`, `docs/card-recognition.md`
 
 ## Comandos oficiais

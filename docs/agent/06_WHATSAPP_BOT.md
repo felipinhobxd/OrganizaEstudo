@@ -2,7 +2,7 @@
 
 > Área: Bot WhatsApp
 > Escopo: Supervisor, filho Baileys, fila, votos, avisos, sessão, segurança
-> Última atualização: 2026-09-23
+$12026-09-25
 > Fonte principal: `bot/service.mjs`, `bot/index.mjs`, `bot/queue-worker.mjs`, `bot/poll-votes.mjs`, `bot/poll-identities.mjs`, `bot/warning-notify.mjs`, `bot/session-guard.mjs`, `bot/group-participants.mjs`, `bot/format.mjs`, `bot/dispatch-id.mjs`, `bot/instrument.mjs`, `bot/sync-groups.mjs`, `bot/package.json`, `.github/workflows/ci.yml`
 
 ## Arquitetura do processo

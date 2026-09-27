@@ -2,7 +2,7 @@
 
 > Área: Segurança + Performance
 > Escopo: Auth, RLS, secrets, riscos de exposição; gargalos, concorrência, memória
-> Última atualização: 2026-09-23
+$12026-09-25
 > Fonte principal: `lib/backend.ts`, `lib/supabase-server.ts`, `lib/rate-limit.ts`, `lib/purge.ts`, `recognizer/service_auth.py`, `bot/session-guard.mjs`, `.github/workflows/ci.yml` (CI de segurança dos commits), `supabase/migrations/*security*`
 
 ## SEGURANÇA

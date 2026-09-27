@@ -2,8 +2,8 @@
 
 > Área: Mapa geral da documentação de agente
 > Escopo: Navegação e recuperação de contexto entre sessões
-> Última atualização: 2026-09-24
-> Fonte principal: Análise completa do código (commits até `6b9e8a6e`) + sessões de 2026-09-24
+> Última atualização: 2026-09-25
+> Fonte principal: Análise completa do código + sessões de 2026-09-24/25
 
 ## Objetivo
 
@@ -27,36 +27,35 @@ Regras de manutenção (valem para TODOS os arquivos desta pasta):
 4. Execute o "Próximo passo EXATO" descrito no handoff.
 ```
 
-Com isso um agente deve conseguir trabalhar em ~2-5 minutos de leitura.
-
 ## Mapa das áreas
 
 | Ordem | Arquivo | Área | Estado | Última atualização |
 | ----- | ----------------------- | ------------------- | ------ | ------------------ |
 | 01 | `01_PROJECT_CONTEXT.md` | Contexto geral | Estável — leitura obrigatória de todo agente novo | 2026-09-23 |
 | 02 | `02_ARCHITECTURE.md` | Arquitetura real | Estável | 2026-09-23 |
-| 03 | `03_DATABASE.md` | Supabase/PostgreSQL | ⚠️ Migrations 180000/200000/210000/220000 pendentes (avisos, ciclo, edição, exclusão); 150000/160000 aplicadas ✓ | 2026-09-25 |
-| 04 | `04_API.md` | API Next.js (app/api) | Estável; rotas novas `/api/auctions/drafts` e `/api/quick-polls` | 2026-09-24 |
-| 05 | `05_FRONTEND.md` | Frontend (app/) | Estável; wizard com rascunhos + BRINDE POR CARTA + brinde avulso em `/auctions/brinde` | 2026-09-24 |
-| 06 | `06_WHATSAPP_BOT.md` | Bot Baileys (bot/) | Estável; aviso global SEM DM ao participante (só admins no 3º); figurinha+@todos com gatilho corrigido; terminal detalhado | 2026-09-24 |
-| 07 | `07_CARD_RECOGNITION.md` | Reconhecimento (recognition/) | Estável; pipeline ativo VISÍVEL no wizard (P-11: painel da Vercel sem secret = navegador) | 2026-09-24 |
-| 08 | `08_AUCTION_DOMAIN.md` | Domínio de leilão | Estável; fila com itens de brinde (20260924160000) | 2026-09-24 |
-| 09 | `09_TESTS_AND_VALIDATION.md` | Testes e validação | Estável — Node 169, SQL 11 arquivos, Python 252, bot 31 | 2026-09-24 |
-| 10 | `10_SECURITY_AND_PERFORMANCE.md` | Segurança e performance | Estável | 2026-09-23 |
-| 11 | `11_PENDING_WORK.md` | Trabalho pendente | 🔴 Itens abertos (P-04, P-11 secret na Vercel, P-13 aplicação de migrations) | 2026-09-24 |
-| 12 | `12_SESSION_HANDOFF.md` | Checkpoint da sessão | Atualizado a cada sessão | 2026-09-24 |
+| 03 | `03_DATABASE.md` | Supabase/PostgreSQL | ⚠️ Migrations 180000–250000 pendentes de aplicação manual (ver 11_PENDING) | 2026-09-25 |
+| 04 | `04_API.md` | API Next.js (app/api) | Estável; rotas novas `/api/auctions/drafts`, `/api/quick-polls`, `/api/auctions/delete` | 2026-09-25 |
+| 05 | `05_FRONTEND.md` | Frontend (app/) | Estável; wizard com rascunhos + brinde por carta + auto-save; dashboard com painel de avisos + exclusão | 2026-09-25 |
+| 06 | `06_WHATSAPP_BOT.md` | Bot Baileys (bot/) | Estável; sequência de abertura ATÔMICA (regras+figurinha+@all); avisos com ciclo de 3; @all real; backup na nuvem | 2026-09-25 |
+| 07 | `07_CARD_RECOGNITION.md` | Reconhecimento (recognition/) | Estável; pipeline VISÍVEL no wizard; warming backoff 5s; DiML NaN demotion | 2026-09-25 |
+| 08 | `08_AUCTION_DOMAIN.md` | Domínio de leilão | Estável; exclusão real de leilão; ciclo de 3; brinde na fila | 2026-09-25 |
+| 09 | `09_TESTS_AND_VALIDATION.md` | Testes e validação | Estável — Node 171, bot 38, Python 252, typecheck, build, 12 SQL test files | 2026-09-25 |
+| 10 | `10_SECURITY_AND_PERFORMANCE.md` | Segurança e performance | ⚠️ Supabase Log Ingestion quase no limite (0.96/1 GB); polling reduzido ~56% | 2026-09-25 |
+| 11 | `11_PENDING_WORK.md` | Trabalho pendente | 🔴 Migrations para aplicar + P-11 Vercel + desktop app conversão | 2026-09-25 |
+| 12 | `12_SESSION_HANDOFF.md` | Checkpoint da sessão | Atualizado a cada sessão | 2026-09-25 |
 
 ## Estado atual resumido por área
 
-- **Site/API (app/, lib/)** — funcional. Cadastro em lote com valores personalizados + automático; exportação Excel com TOTAL e aba de alterações; janela do dashboard 30 dias; **rascunhos do wizard em lote (2026-09-24): salvar/abrir/excluir, fotos no Storage, apaga ao publicar**.
-- **Banco (supabase/)** — migration de avisos + histórico + limpeza 30d e a de brindes/lembretes/fotos extra ESTÃO aplicadas em produção (doctor confirma). ⚠️ Migration de rascunhos (`20260924150000`) versionada e testada no CI, mas NÃO aplicada na instância — aplicação manual via SQL Editor é o fluxo do projeto (item P-13 de `11_PENDING_WORK.md`).
-- **Bot (bot/)** — funcional; supervisor com restart noturno, teto de heap 384 MB, dreno de notificações de avisos globais.
-- **Reconhecimento (recognition/)** — funcional e reforçado (pré-2011 + Devir + anti-ruído com density gate); carga lazy + descarga por inatividade; ~13.271 cartas `es` fora do índice visual (decisão: espanhol cancelado do produto).
-- **CI (.github/workflows/ci.yml)** — verde: Postgres 17 real + todas as migrations + SQL tests (inclui rascunhos e a primeira cobertura do purge) + bot + python + build + smoke.
+- **Site/API (app/, lib/)** — funcional. Wizard em lote: rascunhos com auto-save, brinde por carta (foto+enquete no lugar do leilão), edição de lote pendente na fila, até 200 cartas. Dashboard: painel de avisos com ciclo de 3, exclusão real de leilão ("sim quero").
+- **Banco (supabase/)** — migrations de 2026-09-24/25 escritas e testadas no CI; algumas pendentes de aplicação manual (ver P-13). Snapshot do dashboard com LIMITs (fix de egress/log). Snapshot do export com LIMITs (fix de timeout). Limpeza de 1 dia (era 30). Máximo 200 cartas por fila.
+- **Bot (bot/)** — funcional. Sequência de abertura ATÔMICA: regras → 3s → figurinha → @all (menções reais, todos os JIDs). Nunca duplica, nunca inverte ordem. DM de lote falho para os admins. Avisos: redução de lance conta no ciclo; 3 = DM aos admins + reset; o participante NÃO recebe DM.
+- **Reconhecimento (recognition/)** — funcional. Pipeline ativo VISÍVEL no wizard (chip). Warming backoff: 5s (era 60s cego). Health timeout: 5s (era 1.2s).
+- **Performance/Supabase** — polling global reduzido ~56% (bot 5s, dashboard 30s, Realtime debounce 5s). Log Ingestion era 4.8 GB/dia → estimado ~80-120 MB/dia.
+- **CI (.github/workflows/ci.yml)** — verde: Postgres 17 + todas as migrations + 12 SQL test files + bot + python + build + smoke.
 
 ## Próxima área recomendada
 
-Ver **`11_PENDING_WORK.md`** (backlog priorizado) e **`12_SESSION_HANDOFF.md`** (checkpoint). Trabalho imediato: **P-13** (operador aplicar a migration de rascunhos no SQL Editor + smoke). Backlog grande: **P-04** (SigLIP2 quantizado, exige re-gerar índice ~6-8h CPU) e **P-11** (env Vercel — 2 min do operador).
+Ver **`11_PENDING_WORK.md`** e **`12_SESSION_HANDOFF.md`**. Trabalho imediato: **aplicar migrations pendentes** (P-13). Backlog: **P-11** (secret na Vercel), **conversão para desktop .exe** (avaliação feita — Electron wrapper recomendado, não SQLite).
 
 ## Comandos oficiais (referência rápida — detalhes em `09_TESTS_AND_VALIDATION.md`)
 
@@ -64,10 +63,12 @@ Ver **`11_PENDING_WORK.md`** (backlog priorizado) e **`12_SESSION_HANDOFF.md`** 
 npm ci                       # site (raiz)
 npm --prefix bot ci          # bot
 npm run typecheck            # tsc --noEmit
-npm test                     # node --test tests/*.test.mjs
-npm --prefix bot test        # testes do bot (via npm run check)
-npm run build                # next build
-npm run start                # site + bot + serviço de reconhecimento (Windows, máquina do operador)
-pm run doctor               # check-up pré-leilão: migrations, bot, reconhecimento, backup, figurinha
-python -m unittest discover -s recognition/tests   # testes python (no venv recognition/.venv)
+npm test                     # node --test tests/*.test.mjs (171)
+npm --prefix bot run check   # sintaxe bot + patches + subset
+node --test bot/*.test.mjs   # suíte bot (38)
+npm run build                # next build (RODE ANTES DO npm run start!)
+npm run start                # site + bot + serviço de reconhecimento (Windows)
+npm run doctor               # check-up pré-leilão: migrations, bot, reconhecimento, backup, figurinha
+# python: a partir de recognition/ com o venv
+.venv\Scripts\python.exe -m unittest discover -s tests   # 252 testes
 ```
