@@ -31,6 +31,18 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           RECOGNITION_SERVICE_SHARED_SECRET: ${{ secrets.RECOGNITION_SERVICE_SHARED_SECRET }}
 
+      - name: Write .env.local for the desktop app (embedded credentials)
+        run: |
+          @"
+          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          RECOGNITION_SERVICE_SHARED_SECRET=${{ secrets.RECOGNITION_SERVICE_SHARED_SECRET }}
+          "@ | Out-File -FilePath .env.local -Encoding utf8
+          Copy-Item .env.local bot/.env
+        shell: pwsh
+
       - name: Install bot dependencies
         run: npm --prefix bot ci --no-audit --no-fund
 
