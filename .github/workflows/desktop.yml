@@ -2,7 +2,7 @@ name: Build Desktop App
 on:
   push:
     branches: [main]
-    paths: ["electron/**", ".github/workflows/desktop.yml"]
+    paths: ["electron/**", ".github/workflows/desktop.yml", "package.json", "app/**", "lib/**", "bot/**", "supabase/**"]
   workflow_dispatch:
 
 permissions:
