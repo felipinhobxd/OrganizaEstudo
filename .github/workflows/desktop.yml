@@ -1,0 +1,77 @@
+name: Build Desktop App
+on:
+  push:
+    branches: [main]
+    paths: ["electron/**", ".github/workflows/desktop.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build Next.js
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RECOGNITION_SERVICE_SHARED_SECRET: ${{ secrets.RECOGNITION_SERVICE_SHARED_SECRET }}
+
+      - name: Install bot dependencies
+        run: npm --prefix bot ci --no-audit --no-fund
+
+      - name: Install Python + recognition deps (lightweight)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: |
+          python -m pip install --no-input "numpy>=1.26" "opencv-python-headless>=4.10" "onnxruntime>=1.20" "requests>=2.31" "fastapi>=0.115" "uvicorn>=0.30"
+          pip install -r recognition/requirements.txt --no-deps || true
+
+      - name: Install Electron + builder
+        run: |
+          npm install --save-dev electron@33 electron-builder@25 --no-audit --no-fund
+
+      - name: Build Setup.exe
+        run: npx electron-builder --win --config.directories.output=dist-electron
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist-electron/*.exe
+          tag_name: desktop-v${{ github.run_number }}
+          name: Leilão Pokémon Desktop v${{ github.run_number }}
+          body: |
+            Instalador desktop do Leilão Pokémon.
+
+            **Como instalar:**
+            1. Baixe o `Leilão Pokémon Setup X.X.X.exe`
+            2. Execute (duplo clique)
+            3. O app abre em janela própria — sem navegador, sem terminal
+
+            **O que está incluído:**
+            - Painel completo (dashboard, wizard em lote, central WhatsApp)
+            - Bot WhatsApp (Baileys) — já embutido
+            - Serviço de reconhecimento (IA) — já embutido
+
+            **Antes do primeiro uso:**
+            - O app usa o mesmo Supabase do painel web (grátis, já configurado)
+            - O QR do WhatsApp aparece na Central WhatsApp dentro do app
+          draft: false
+          prerelease: false
