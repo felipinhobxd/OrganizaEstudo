@@ -22,3 +22,4 @@ bot/data/
 
 bot/backups/
 dist-electron/
+*.exe
