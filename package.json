@@ -39,5 +39,55 @@
   },
   "overrides": {
     "onnxruntime-node": "file:stubs/onnxruntime-node"
+  },
+  "main": "electron/main.cjs",
+  "build": {
+    "appId": "com.leilaopokemon.desktop",
+    "productName": "Leilão Pokémon",
+    "directories": {
+      "output": "dist-electron",
+      "buildResources": "electron"
+    },
+    "files": [
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": ".",
+        "to": "app",
+        "filter": [
+          "**/*",
+          "!node_modules/.cache/**",
+          "!.next/cache/**",
+          "!dist-electron/**",
+          "!.git/**",
+          "!recognition/.venv/**",
+          "!recognition/models/**",
+          "!recognition/data/**",
+          "!bot/sessao/**",
+          "!bot/backups/**",
+          "!electron/node_modules/**"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "electron/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Leilão Pokémon"
+    }
   }
 }
