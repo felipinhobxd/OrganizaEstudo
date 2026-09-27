@@ -557,7 +557,7 @@ process.on("unhandledRejection", error => {
 await loadPreviousWorkerState();
 await publishState({ status: "starting" });
 heartbeatTimer = setInterval(() => void publishState(), HEARTBEAT_MS);
-commandTimer = setInterval(() => void pollBotCommands(), 3_000);
+commandTimer = setInterval(() => void pollBotCommands(), 5_000);
 // Limpeza automatica de leiloes antigos (30 dias): o supervisor roda 24h, a
 // rotina e hourly e so remove lotes TERMINAIS (closed/sold/cancelled) mais
 // velhos que o corte — nunca nada aberto/recente (cleanup_old_auctions).

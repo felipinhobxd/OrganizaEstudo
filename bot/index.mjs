@@ -1102,7 +1102,7 @@ schedulerTimer = setInterval(() => {
           void sendDueQuickPolls();
           void paymentReminderDrain.tick();
         })();
-      }, 3000);
+      }, 5000);
       void syncOpenAuctionGroups().catch(error => console.warn("Falha ao sincronizar grupos abertos:", error?.message || error));
       void runScheduler();
       void finalizeDueAuctions();

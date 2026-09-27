@@ -254,7 +254,7 @@ export default function BulkAuctionWizard() {
         if (!stopped) setQueueView(body as QueueView);
       } catch (reason) { if (!stopped) setError(reason instanceof Error ? reason.message : "Falha ao atualizar a fila."); }
     };
-    void load(); const timer = setInterval(() => void load(), 3000);
+    void load(); const timer = setInterval(() => void load(), 10_000);
     return () => { stopped = true; clearInterval(timer); };
   }, [queueId]);
 

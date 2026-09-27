@@ -99,7 +99,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!session) return;
     let timer: ReturnType<typeof setTimeout>;
-    const reload = () => { clearTimeout(timer); timer = setTimeout(() => void refresh(), 250); };
+    const reload = () => { clearTimeout(timer); timer = setTimeout(() => void refresh(), 5_000); };
     void refresh(false);
     const channel = db.channel("admin-auctions").on("postgres_changes", { event: "*", schema: "public", table: "auction_events" }, reload).subscribe(status => {
       setRealtime(status === "SUBSCRIBED" ? "Ao vivo" : "Reconectando…");
@@ -107,7 +107,7 @@ export default function Dashboard() {
     });
     const focusReload = () => { if(!document.hidden)void refresh(false); };
     window.addEventListener("focus", focusReload);
-    const fallback = setInterval(() => { if(!document.hidden)void refresh(false, Date.now()-fullLoadedAt.current < 60000); }, 15000);
+    const fallback = setInterval(() => { if(!document.hidden)void refresh(false, Date.now()-fullLoadedAt.current < 60000); }, 30_000);
     return () => { clearTimeout(timer); clearInterval(fallback); window.removeEventListener("focus", focusReload); void db.removeChannel(channel); };
   }, [db, session?.user.id, refresh]);
   async function execute(command: Command) {
