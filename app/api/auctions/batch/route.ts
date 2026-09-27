@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const eventId = text(body.eventId, true);
     const queue = body.queue ?? {};
     const sourceItems = Array.isArray(body.items) ? body.items : [];
-    if (!sourceItems.length || sourceItems.length > 100) throw new HttpError(400, "A fila precisa ter entre 1 e 100 cartas.");
+    if (!sourceItems.length || sourceItems.length > 200) throw new HttpError(400, "A fila precisa ter entre 1 e 200 cartas.");
 
     const groupId = String(queue.group_id ?? "");
     if (!uuid.test(groupId)) throw new HttpError(400, "Selecione um grupo do WhatsApp.");

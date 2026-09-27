@@ -122,7 +122,7 @@ declare
 begin
   if not exists(select 1 from public.admin_profiles where user_id=p_admin_user_id and active and role in('admin','operator')) then raise exception 'forbidden'; end if;
   if length(eid)<1 or length(eid)>200 then raise exception 'invalid_event_id'; end if;
-  if jsonb_typeof(items)<>'array' or jsonb_array_length(items)<1 or jsonb_array_length(items)>100 then raise exception 'invalid_queue_items'; end if;
+  if jsonb_typeof(items)<>'array' or jsonb_array_length(items)<1 or jsonb_array_length(items)>200 then raise exception 'invalid_queue_items'; end if;
 
   req:=p_payload||jsonb_build_object('actor',p_admin_user_id,'type','AUCTION_QUEUE_CREATE');
   perform pg_advisory_xact_lock(hashtextextended(eid,0));
