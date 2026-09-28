@@ -61,7 +61,7 @@
         "filter": [
           "**/*",
           "!node_modules/.cache/**",
-          "!.next/cache/**",
+          "!.next/**",
           "!dist-electron/**",
           "!.git/**",
           "!recognition/.venv/**",
@@ -69,7 +69,8 @@
           "!recognition/data/**",
           "!bot/sessao/**",
           "!bot/backups/**",
-          "!electron/node_modules/**"
+          "!electron/node_modules/**",
+          "!*.exe"
         ]
       }
     ],

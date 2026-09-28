@@ -23,13 +23,18 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
-      - name: Build Next.js
+      - name: Validate Next.js build (catches TS/JSX errors — .exe builds fresh on the user's PC)
         run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           RECOGNITION_SERVICE_SHARED_SECRET: ${{ secrets.RECOGNITION_SERVICE_SHARED_SECRET }}
+        continue-on-error: false
+
+      - name: Clean .next (the .exe builds it on the user's PC — CI paths don't transfer)
+        run: Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue
+        shell: pwsh
 
       - name: Write .env.local for the desktop app (embedded credentials)
         run: |
