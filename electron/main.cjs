@@ -1,9 +1,9 @@
 // LEILÃO POKÉMON — Desktop (Electron)
-// Abre em janela nativa e sobe TUDO via start-all.mjs (o script que já
-// gerencia Next.js + bot supervisor + reconhecimento com heap caps e
-// restart). Um processo só, com check de porta e kill limpo.
-const { app, BrowserWindow, Menu, shell } = require("electron");
-const { spawn } = require("child_process");
+// Janela nativa + detecta o servidor (localhost:3000). Se não estiver
+// rodando, procura o projeto no PC (D:\LeilaoPokemon ou caminho salvo)
+// e roda npm run start a partir dele.
+const { app, BrowserWindow, Menu, shell, dialog } = require("electron");
+const { spawn, execSync } = require("child_process");
 const path = require("path");
 const http = require("http");
 const fs = require("fs");
@@ -12,23 +12,33 @@ const PORT = 3000;
 let mainWindow = null;
 let stackProcess = null;
 
-// --- Uma instância SÓ: segunda tentativa de abrir foca a janela existente ---
-const gotLock = app.requestSingleInstanceLock();
-if (!gotLock) {
-  app.quit();
-} else {
-  app.on("second-instance", () => {
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
+// --- Procura o projeto no PC --------------------------------------------------
+function findProjectDir() {
+  const candidates = [
+    path.join(app.getPath("home"), ".leilao-pokemon-path"), // arquivo de config
+    "D:\\LeilaoPokemon",
+    "C:\\LeilaoPokemon",
+    path.join(app.getPath("home"), "LeilaoPokemon"),
+    path.join(app.getPath("documents"), "LeilaoPokemon"),
+  ];
+  for (const c of candidates) {
+    if (c.endsWith(".leilao-pokemon-path")) {
+      // Se é um arquivo de texto com o caminho
+      if (fs.existsSync(c)) {
+        const saved = fs.readFileSync(c, "utf8").trim();
+        if (saved && fs.existsSync(path.join(saved, "package.json"))) return saved;
+      }
+      continue;
     }
-  });
+    if (fs.existsSync(path.join(c, "package.json")) &&
+        fs.existsSync(path.join(c, "scripts", "start-all.mjs"))) {
+      return c;
+    }
+  }
+  return null;
 }
 
-// --- Detecta a raiz do projeto (dev vs instalado) ----------------------------
-const ROOT = app.isPackaged ? path.join(process.resourcesPath, "app") : path.join(__dirname, "..");
-
-// --- Verifica se o painel já está rodando -----------------------------------
+// --- Verifica se o painel está rodando ----------------------------------------
 function isServerRunning() {
   return new Promise(resolve => {
     const req = http.get(`http://127.0.0.1:${PORT}/api/health`, res => {
@@ -40,8 +50,29 @@ function isServerRunning() {
   });
 }
 
-// --- Espera o painel ficar disponível ---------------------------------------
-function waitForServer(timeoutMs = 120_000) {
+// --- Sobe npm run start a partir do projeto local ------------------------------
+function startStack(projectDir) {
+  if (!projectDir) return false;
+  console.log(`[stack] npm run start em ${projectDir}`);
+  stackProcess = spawn("npm", ["run", "start"], {
+    cwd: projectDir,
+    env: { ...process.env, NODE_ENV: "production" },
+    stdio: ["ignore", "pipe", "pipe"],
+    windowsHide: true,
+    shell: true, // npm no Windows precisa de shell
+  });
+  const log = chunk => {
+    const line = chunk.toString().trim();
+    if (line) console.log(`[stack] ${line}`);
+  };
+  stackProcess.stdout.on("data", log);
+  stackProcess.stderr.on("data", log);
+  stackProcess.on("exit", code => console.log(`[stack] saiu (code ${code})`));
+  return true;
+}
+
+// --- Espera o painel ficar disponível -------------------------------------------
+function waitForServer(timeoutMs = 90_000) {
   const started = Date.now();
   return new Promise(resolve => {
     const check = async () => {
@@ -53,51 +84,39 @@ function waitForServer(timeoutMs = 120_000) {
   });
 }
 
-// --- Sobe o stack inteiro (start-all.mjs já gerencia tudo) ------------------
-function startStack() {
-  const script = path.join(ROOT, "scripts", "start-all.mjs");
-  if (!fs.existsSync(script)) {
-    console.log("[stack] start-all.mjs não encontrado — só abrindo janela");
-    return;
-  }
-  console.log("[stack] iniciando via start-all.mjs...");
-  // CRÍTICO: no Electron empacotado, process.execPath aponta para o PRÓPRIO
-  // .exe. Spawnar com ele abre OUTRA instância do app (loop infinito de
-  // janelas). A flag ELECTRON_RUN_AS_NODE=1 faz o binário do Electron agir
-  // como Node.js puro — exatamente o que os scripts precisam.
-  const isElectron = Boolean(process.versions.electron);
-  const nodeBin = isElectron ? process.execPath : "node";
-  const childEnv = { ...process.env, NODE_ENV: "production" };
-  if (isElectron) childEnv.ELECTRON_RUN_AS_NODE = "1";
-
-  stackProcess = spawn(nodeBin, [script], {
-    cwd: ROOT,
-    env: childEnv,
-    stdio: ["ignore", "pipe", "pipe"],
-    windowsHide: true,
-  });
-  const log = chunk => {
-    const line = chunk.toString().trim();
-    if (line) console.log(`[stack] ${line}`);
-  };
-  stackProcess.stdout.on("data", log);
-  stackProcess.stderr.on("data", log);
-  stackProcess.on("exit", code => console.log(`[stack] saiu (code ${code})`));
+// --- Tela de "sem servidor" com botão de tentar de novo ------------------------
+function getNoServerHtml(projectDir) {
+  const dir = projectDir || "não encontrado";
+  return `data:text/html;charset=utf-8,
+    <body style="font-family:sans-serif;background:#1a1a2e;color:#eee;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
+      <div style="text-align:center;max-width:500px;padding:40px">
+        <div style="font-size:48px;margin-bottom:16px">🦭</div>
+        <h2 style="color:#e74c3c;margin:0 0 10px">Painel não está rodando</h2>
+        <p style="color:#aaa;font-size:14px">Projeto detectado em:<br><code style="background:#16213e;padding:6px 12px;border-radius:6px;color:#e74c3c">${dir}</code></p>
+        <p style="color:#777;font-size:13px;margin-top:20px">
+          O app está tentando iniciar automaticamente.<br>
+          Se não funcionar, abra um terminal e rode <code style="color:#e74c3c">npm run start</code>.
+        </p>
+        <p style="color:#555;font-size:12px;margin-top:20px">A janela conecta sozinha quando o servidor ficar pronto.</p>
+      </div>
+    </body>`;
 }
 
-// --- Kill limpo de TUDO ------------------------------------------------------
+// --- Kill limpo de TUDO ----------------------------------------------------------
 function killStack() {
   if (!stackProcess) return;
   try { stackProcess.kill("SIGTERM"); } catch {}
-  // No Windows o SIGTERM pode não matar os netos — força depois de 3s
   setTimeout(() => { try { stackProcess.kill("SIGKILL"); } catch {} }, 3_000);
   stackProcess = null;
 }
 
-// --- Janela -------------------------------------------------------------------
+// --- Janela ------------------------------------------------------------------------
 async function createWindow() {
   const alreadyRunning = await isServerRunning();
-  if (!alreadyRunning) startStack();
+  const projectDir = alreadyRunning ? null : findProjectDir();
+  if (!alreadyRunning && projectDir) {
+    startStack(projectDir);
+  }
 
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -131,40 +150,17 @@ async function createWindow() {
   if (alreadyRunning) {
     mainWindow.loadURL(`http://localhost:${PORT}`);
   } else {
-    // Tela de loading enquanto o stack sobe (pode levar 10-30s)
-    mainWindow.loadURL(`data:text/html;charset=utf-8,
-      <body style="font-family:sans-serif;background:#1a1a2e;color:#eee;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
-        <div style="text-align:center">
-          <h2 style="color:#e74c3c;margin-bottom:10px">Iniciando o Leilão Pokémon...</h2>
-          <p style="color:#aaa">Next.js + Bot WhatsApp + Reconhecimento</p>
-          <div style="margin-top:20px;font-size:28px;animation:pulse 1.5s infinite">🦭</div>
-          <style>@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}</style>
-        </div>
-      </body>`);
-
-    // Assim que o servidor responder, troca a tela de loading pelo painel
+    mainWindow.loadURL(getNoServerHtml(projectDir));
     const ok = await waitForServer();
     if (ok && mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.loadURL(`http://localhost:${PORT}`);
-    } else if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.loadURL(`data:text/html;charset=utf-8,
-        <body style="font-family:sans-serif;background:#1a1a2e;color:#eee;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
-          <div style="text-align:center;max-width:500px;padding:40px">
-            <h2 style="color:#e74c3c">Falha ao iniciar</h2>
-            <p style="color:#aaa;font-size:14px">
-              Verifique se a porta 3000 está livre e se o arquivo .env.local
-              está presente na pasta do aplicativo.<br><br>
-              Clique em "Recarregar" para tentar de novo.
-            </p>
-          </div>
-        </body>`);
     }
   }
 
   mainWindow.on("closed", () => { mainWindow = null; });
 }
 
-// --- Reconecta se a página cair e o servidor voltar ---------------------------
+// --- Reconecta automaticamente quando o servidor aparecer ------------------------
 setInterval(async () => {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   const url = mainWindow.webContents.getURL();
@@ -173,7 +169,19 @@ setInterval(async () => {
   }
 }, 5_000);
 
-// --- Ciclo de vida --------------------------------------------------------------
-app.whenReady().then(createWindow);
+// --- Uma instância SÓ ----------------------------------------------------------------
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+  app.whenReady().then(createWindow);
+}
+
 app.on("window-all-closed", () => { killStack(); app.quit(); });
 app.on("before-quit", () => killStack());
